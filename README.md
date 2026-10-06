@@ -6,63 +6,60 @@ This project investigates the intersection of innovation and Carbon Capture and 
 
 ## Repository Structure
 
-- **.Rproj.user/**: R project user-specific files.
-- **clean_outputs/**: Contains cleaned data outputs.
-- **data/**: Raw datasets used for analysis.
-    -    Data includes 2020-21 Stripe/Microsoft data as provided publicly by Carbon Plan. This is stored in         **/data/projects.csv**. Data also includes 2022-23 Stripe data as provided publicy by Frontier Climate. This is stored in **/data/project_applications_22_23/** Data set (1) from 2020-21 contains all applications, with their scores across six metrics for performance. This data has been cleaned and compiled by CDR-CarbonPlan and accessed online. All project PDFs can be found on this github repo: *https://github.com/stripe/carbon-removal-source-materials/tree/master.* Data set (2) from 2022-23 is the universe of all applicants to the Frontier Climate AMC. All applicants are included. Winners of the early stagemechanism are published online, while larger offtake agreements are not required to be published (according to discussions with Frontier staff).  All project PDFs can be found on this github repo: *github.com/frontierclimate/carbon-removal-source-materials/tree/main*
-    - All Stripe applicant data was merged into one dataset: to categorise winners/losers, the publicly available information for who was awarded a grant is made public on Stripe's website, for 2022-23, the purchase agreements are made publicly available on Stripe/Frontier climate github, firm names were scraped from website, then additional information was added in manually
-- **do_files/**: Scripts for data processing and analysis.
-- **graphs_output/**: Generated graphs and visualizations.
-- **visual_outputs/**: Additional visual materials.
+```
+amc_ccs/
+├── amc_ccs.Rproj
+├── orbis-clean-merge.R           # Orbis wide -> long, firm-year panel
+├── orbis_desc_DID_R-conversion.R # R port of the Stata matching + synthetic-DiD code (from a co-author)
+├── prelim_analysis.R             # Stripe / Google-patent cleaning, summary stats, preliminary regressions
+├── do_files/                     # Stata: RDD motivation, patent and Orbis DiD, aggregate synthetic-DiD event studies
+├── data/                         # inputs tracked in git (see below)
+├── clean_outputs/                # cleaned datasets written by the scripts
+├── graphs_output/                # figures
+├── writeup-inprog [no github]/   # draft and presentation PDFs (July 2025)
+├── z-forlatex/                   # images and a reference paper used in the write-up
+└── z-dead-*.R                    # retired scripts, kept for reference, not run
+```
+
+### Data
+
+- `data/Carbonplan_projects_20_21.csv` — 2020-21 Stripe/Microsoft applications, as compiled by CDR-CarbonPlan from Stripe's public materials (all applications, scored on six performance metrics). Project PDFs: *github.com/stripe/carbon-removal-source-materials*.
+- 2022-23 Frontier Climate applications (the universe of applicants to the early-stage mechanism; winners are public, larger offtake agreements need not be, per Frontier staff). Project PDFs: *github.com/frontierclimate/carbon-removal-source-materials*. **Not in the repo** (gitignored).
+- Winner/loser status: 2020-21 awards are published on Stripe's website; 2022-23 purchase agreements are on the Stripe / Frontier GitHub. Firm names were scraped from the websites, then completed by hand.
+- `data/IEA_policy_data_cleaned.csv` — IEA CCUS policy data.
+- `data/orbis/` — Orbis financials, downloaded spring 2024 (`historical_df_orbis.xlsx`, `orbis_gen_1.xlsx`, background docs). `orbis_long.*` / `orbis_long_2.*` are intermediate outputs, not yet tracked.
+- **Gitignored, local only:** `data/stripe_data`, `data/microsoft_2022_23`, `data/PATSTAT`, `data/google_patents`.
 
 ## Key Files
 
-- **amc_ccs.Rproj**: R project file.
-- **did_df.csv**: Dataset for Difference-in-Differences analysis. In month-year format for each firm. 
-- **microsoft_data_cleaning.R**: Script for cleaning Microsoft data.
-- **orbis-clean-merge.R**: Script for merging and cleaning Orbis data.
-- **orbis_desc_DID_R-conversion.R**: Orbis data processing for DiD analysis.
-- **patent_level_df.csv**: Patent-level dataset.
-- **patstat-cleaning-test.R**: Script for cleaning PATSTAT data.
-- **pdf-scraping-loop.R**: Script for scraping data from PDFs.
-- **prelim_analysis.R**: Preliminary data analysis script.
+| File | Role |
+|---|---|
+| `orbis-clean-merge.R` | Cleans the Orbis download, reshapes wide -> long and writes the dated firm-year file `orbis_long_<date>.csv` plus numeric-NA summaries |
+| `prelim_analysis.R` | Cleans the Stripe data, merges manually collected Google-patent data, summary statistics and preliminary regressions on winner trends. Writes `patent_level_df.csv` and `did_df.csv` (firm x month-year, for DiD). The `summary_stats.csv` and `firm_level_data.csv` writes are currently commented out; those files in `clean_outputs/` are older copies |
+| `orbis_desc_DID_R-conversion.R` | Fuzzy firm-name matching of patents to Orbis, converted from Stata (provided by a co-author); reads `orbis_long_2025-06-26.csv`, `firm_level_data.csv`, `did_df_copy.csv`; writes `250701_patent_firm_orbis.csv` |
+| `do_files/*.do` | Original Stata versions (`01_RDD_motivation`, `02_patents_desc_DID`, `03_orbis_desc_DID`, `aggregate_event_SDID[_nocomp]`). Contain a hardcoded Dropbox path (`global projdir`) that must be changed |
+| `z-dead-microsoft_data_cleaning.R`, `z-dead-patstat-cleaning-test.R`, `z-dead-pdf-scraping-loop.R` | Retired: Microsoft data cleaning, PATSTAT cleaning test, PDF scraping |
 
 ## Getting Started
 
-1. **Clone the repository**:
+1. Clone the repository:
    ```bash
-   git clone https://github.com/allegra-saggese-econ/amc_ccs.git
-2.	Navigate to the project directory:
-3. **Analysis Scripts**
-   - Data Cleaning:
-     - orbis-clean-merge.R: Merges and cleans Orbis data into firm-year-level observation
-   - Data Analysis:
-     - prelim_analysis.R: Conducts preliminary analysis.
-     - orbis_desc_DID_R-conversion.R: Processes Orbis data for DiD analysis.
-   - Data Scraping:
-   -     pdf-scraping-loop.R: Scrapes data from PDFs.
-   - DEAD SCRIPTS:
-      - z-dead-microsoft_data_cleaning.R: Cleans Microsoft data.
-      - z-dead-patstat-cleaning-test.R: Cleans PATSTAT data.
-
+   git clone https://github.com/allegra-saggese/amc_ccs.git
+   ```
+2. Open `amc_ccs.Rproj` in RStudio.
+3. The scripts are not chained by a runner. `orbis-clean-merge.R` and `prelim_analysis.R` are independent; `orbis_desc_DID_R-conversion.R` reads their outputs (via the `clean_outputs/` copies listed above). The gitignored raw inputs must be placed in `data/` first, and script paths should be checked (the scripts use `projdir` / relative paths).
 
 ***
 
 ##### Outputs
 - Cleaned Data: Stored in clean_outputs/.
-- Graphs and Visualizations: Available in graphs_output/ and visual_outputs/.
-
-##### Contributing
-Contributions are welcome! Please fork the repository and create a pull request with your proposed changes.
+- Graphs and Visualizations: Available in graphs_output/.
 
 ##### License
-This project is licensed under the MIT License.
+No license file is currently included in the repository.
 
 ##### Contact
 For questions or feedback, please contact Allegra Saggese.
 
-## Outstanding tasks 
-- [ ] We will increase clarity of data manipulation in the Scripts- description. 
-- [ ] We will use the third script to build out a data set of all projects with relevant firm-level characteristics
-- [ ] We may expand code to include relevant policies (CCS/CCUS database)
-- [ ] We may expand code to include originally collected data (financials). 
+## Status and planned work
+Work in progress. Planned: a project-level dataset with firm characteristics, relevant CCS/CCUS policy data, and originally collected financials.
